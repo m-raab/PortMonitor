@@ -20,16 +20,3 @@ gen
 *~
 \#*\#
 
-# Gradle Files
-build/
-build-c/
-target/
-.gradle
-# extra C build directory (ISService)
-
-# Ignore Gradle GUI config
-gradle-app.setting
-
-# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
-!gradle-wrapper.jar
-
