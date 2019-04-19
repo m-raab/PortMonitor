@@ -5,16 +5,19 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/int128/slack"
 	"log"
 	"net"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type PortMonitor struct {
-	Ips []string
-	url string
+	Ips      []string
+	hostname string
+	url      string
 
 	start int64
 	end   int64
@@ -107,11 +110,12 @@ func (pm *PortMonitor) ParseCommandLine() {
 		} else {
 			switch os.Args[1] {
 			case paramSet.Name():
-				if *paramWebhookUrlPtr != "" {
-					pm.url = *paramWebhookUrlPtr
-				}
 				err = paramSet.Parse(os.Args[2:])
 				if err == nil {
+					if *paramWebhookUrlPtr != "" {
+						pm.url = *paramWebhookUrlPtr
+					}
+
 					err = pm.ReadParameters(paramRangePtr, paramListPtr, paramStartPtr, paramEndPtr)
 				} else {
 					log.Println(err)
@@ -120,13 +124,12 @@ func (pm *PortMonitor) ParseCommandLine() {
 					os.Exit(1)
 				}
 			case propertiesSet.Name():
-				if *propsWebhookUrlPtr != "" {
-					pm.url = *propsWebhookUrlPtr
-				}
-
 				err = propertiesSet.Parse(os.Args[2:])
 				if err == nil {
 					if *propsFilePtr == "" {
+						if *propsWebhookUrlPtr != "" {
+							pm.url = *propsWebhookUrlPtr
+						}
 						err = errors.New("The properties file must be specified for properties configuration.")
 					}
 					if err == nil {
@@ -274,7 +277,15 @@ func (pm *PortMonitor) ReadProperties(props map[string]string, portRange *string
 	return nil
 }
 
-func (pm *PortMonitor) CalculateIPs() {
+func (pm *PortMonitor) CalculateIPConfig() {
+
+	var err error
+	pm.hostname, err = os.Hostname()
+
+	if err != nil {
+		log.Fatalf("It was not possible to calculate the hostname. (%s)", err)
+	}
+
 	if addrs, err := net.InterfaceAddrs(); err == nil {
 		for _, address := range addrs {
 			// check the address type and if it is not a loopback the display it
@@ -289,10 +300,36 @@ func (pm *PortMonitor) CalculateIPs() {
 	}
 }
 
+func (pm *PortMonitor) sendMessage(monitormsg string) {
+	if pm.url == "" {
+		log.Fatalf("Run with parameter URL for webhook configuration.")
+	}
+
+	message := slack.Message{
+		Username:  "portmonitor",
+		IconEmoji: ":star:",
+		Attachments: []slack.Attachment{
+			{
+				Title:      fmt.Sprintf("Ports is still open on %s", pm.hostname),
+				Text:       monitormsg,
+				AuthorName: "@portminitor",
+				Footer:     "Port Monitor Message",
+				Color:      "danger",
+				Timestamp:  time.Now().Unix(),
+			},
+		},
+	}
+	err := slack.Send(pm.url, &message)
+	if err != nil {
+		log.Fatalf("Could not send the message to Slack: %s", err)
+	}
+	log.Printf("Sent the message %+v", message)
+}
+
 func main() {
 	m := &PortMonitor{}
 	m.ParseCommandLine()
-	m.CalculateIPs()
+	m.CalculateIPConfig()
 
 	message := "Port Monitor \n"
 	portIsOpen := false
@@ -318,8 +355,9 @@ func main() {
 			}
 		}
 	}
+
 	if portIsOpen && m.url != "" {
 		log.Println("Send message to :", m.url)
-		log.Println(message)
+		m.sendMessage(message)
 	}
 }
