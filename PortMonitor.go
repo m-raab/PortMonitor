@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // +build linux darwin
 // +build amd64
 
@@ -99,7 +115,7 @@ func (pm *PortMonitor) ParseCommandLine() {
 	paramListPtr := paramSet.String("list", "", "Port List")
 	paramWebhookUrlPtr := paramSet.String("webhook", "", "Webhook Url for Message")
 
-	propsFilePtr := propertiesSet.String("file", "", "Properties File")
+	propsFilePtr := propertiesSet.String("file", "", "Properties File (Required)")
 	propsStartPtr := propertiesSet.String("start", "", "Property Start Port")
 	propsEndPtr := propertiesSet.String("end", "", "Property End Port")
 	propsRangePtr := propertiesSet.String("range", "", "Property Range Port")
@@ -120,7 +136,8 @@ func (pm *PortMonitor) ParseCommandLine() {
 					}
 
 					err = pm.ReadParameters(paramRangePtr, paramListPtr, paramStartPtr, paramEndPtr)
-				} else {
+				}
+				if err != nil {
 					log.Println(err)
 					fmt.Fprintf(os.Stderr, "Usage of %s params :\n", os.Args[0])
 					paramSet.PrintDefaults()
@@ -209,6 +226,8 @@ func (pm *PortMonitor) ReadParameters(portRange *string, portList *string, start
 		} else {
 			return errors.New(fmt.Sprintf("The end port '%s' is not an integer.", *endPort))
 		}
+	default:
+		return errors.New("It is necessary to specify a port range, a port list or a start and an end port.")
 	}
 	return nil
 }
