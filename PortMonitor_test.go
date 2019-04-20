@@ -177,7 +177,7 @@ func TestParseCommandLineList(t *testing.T) {
 
 func TestCalculateIPs(t *testing.T) {
 	m := &PortMonitor{}
-	m.CalculateIPs()
+	m.CalculateIPConfig()
 
 	if len(m.Ips) < 1 {
 		t.Errorf("IP is not calculated")
@@ -186,7 +186,7 @@ func TestCalculateIPs(t *testing.T) {
 
 func TestPortOpen(t *testing.T) {
 	m := &PortMonitor{}
-	m.CalculateIPs()
+	m.CalculateIPConfig()
 
 	if len(m.Ips) < 1 {
 		t.Errorf("IP is not calculated")
