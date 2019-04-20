@@ -1,22 +1,29 @@
-# IntelliJ project files
-.idea
+# IDE ignore
+.idea/
+*.ipr
 *.iml
-out
-gen
+*.iws
+.vscode/
+
+# temp ignore
 *.log
+*.cache
+*.diff
+*.exe
+*.exe~
+*.patch
+*.tmp
+*.swp
 
-# Eclipse project files
-/bin/
-.settings/
-.classpath
-.project
+# system ignore
+.DS_Store
+Thumbs.db
 
-# configuration for intershop projcts
-/.apt_generated/
-
-# editor backup files
-*.bak
-# emacs editor backup files
-*~
-\#*\#
-
+# build
+/cmd/comet/comet
+/cmd/logic/logic
+/cmd/job/job
+/target
+/configs
+/dist
+/vendor

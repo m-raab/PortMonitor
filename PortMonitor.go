@@ -1,3 +1,6 @@
+// +build linux darwin
+// +build amd64
+
 package main
 
 import (
@@ -153,6 +156,9 @@ func (pm *PortMonitor) ParseCommandLine() {
 				os.Exit(2)
 			}
 		}
+	} else {
+		PrintUsage()
+
 	}
 }
 

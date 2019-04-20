@@ -1,0 +1,20 @@
+language: go
+go:
+  - '1.12.x'
+install:
+  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+script:
+  - dep ensure -v
+cache:
+  directories:
+    - $GOPATH/pkg/dep # cache dep downloaded dependencies
+before_deploy:
+  - go test -v
+  - ./build.sh
+provider: releases
+  api_key: "$OAUTHTOKEN"
+  file: dist/*
+  file_glob: true
+  skip_cleanup: true
+  on:
+    tags: true
