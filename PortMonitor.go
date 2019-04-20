@@ -1,3 +1,6 @@
+// +build linux darwin
+// +build amd64
+
 /*
  * Copyright (c) 2019.
  *
@@ -13,9 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-// +build linux darwin
-// +build amd64
 
 package main
 
