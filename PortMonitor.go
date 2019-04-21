@@ -175,7 +175,7 @@ func (pm *PortMonitor) ParseCommandLine() {
 		}
 	} else {
 		PrintUsage()
-
+		os.Exit(2)
 	}
 }
 
@@ -384,5 +384,11 @@ func main() {
 	if portIsOpen && m.url != "" {
 		log.Println("Send message to :", m.url)
 		m.sendMessage(message)
+	}
+
+	if portIsOpen {
+		os.Exit(10)
+	} else {
+		os.Exit(0)
 	}
 }
