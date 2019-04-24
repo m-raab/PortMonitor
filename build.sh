@@ -17,7 +17,7 @@ do
         echo 'An error has occurred during GO compilation! Aborting the script execution...'
         exit 1
     fi
-    mkdir -p dist && tar -zcvf dist/${package_name}.${GOOS}.${GOARCH}.tar.gz bin/${GOOS}-${GOARCH}/${package_name}
+    mkdir -p dist && tar -zcvf dist/${package_name}.${GOOS}.${GOARCH}.tar.gz -C=bin/${GOOS}-${GOARCH} .
     if [ $? -ne 0 ]; then
         echo 'An error has occurred during packaging! Aborting the script execution...'
         exit 1
