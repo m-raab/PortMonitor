@@ -41,7 +41,12 @@ type PortMonitor struct {
 	start int64
 	end   int64
 
+	rstart int64
+	rend   int64
+
 	list []int64
+
+	debug bool
 }
 
 type ConfigProperties map[string]string
@@ -114,6 +119,7 @@ func (pm *PortMonitor) ParseCommandLine() {
 	paramRangePtr := paramSet.String("range", "", "Port Range")
 	paramListPtr := paramSet.String("list", "", "Port List")
 	paramWebhookUrlPtr := paramSet.String("webhook", "", "Webhook Url for Message")
+	paramDebugPtr := paramSet.Bool("debug", false, "Activates Debug Output")
 
 	propsFilePtr := propertiesSet.String("file", "", "Properties File (Required)")
 	propsStartPtr := propertiesSet.String("start", "", "Property Start Port")
@@ -121,6 +127,7 @@ func (pm *PortMonitor) ParseCommandLine() {
 	propsRangePtr := propertiesSet.String("range", "", "Property Range Port")
 	propsListPtr := propertiesSet.String("list", "", "Property Port List")
 	propsWebhookUrlPtr := propertiesSet.String("webhook", "", "Webhook Url for Message")
+	propsDebugPtr := propertiesSet.Bool("debug", false, "Activates Debug Output")
 
 	if len(os.Args) > 1 {
 		var err error = nil
@@ -143,6 +150,7 @@ func (pm *PortMonitor) ParseCommandLine() {
 					paramSet.PrintDefaults()
 					os.Exit(1)
 				}
+				pm.debug = *paramDebugPtr
 			case propertiesSet.Name():
 				err = propertiesSet.Parse(os.Args[2:])
 				if err == nil {
@@ -150,16 +158,19 @@ func (pm *PortMonitor) ParseCommandLine() {
 						if *propsWebhookUrlPtr != "" {
 							pm.url = *propsWebhookUrlPtr
 						}
+
 						err = errors.New("The properties file must be specified for properties configuration.")
 					}
 					if err == nil {
 						properties, err := ReadPropertiesFile(*propsFilePtr)
 						if err != nil {
-							err = pm.ReadProperties(properties, propsRangePtr, propsListPtr, propsStartPtr, propsEndPtr)
-						} else {
 							err = errors.New("The properties file is not readable.")
+						} else {
+							err = pm.ReadProperties(properties, propsRangePtr, propsListPtr, propsStartPtr, propsEndPtr)
 						}
 					}
+
+					pm.debug = *propsDebugPtr
 				}
 				if err != nil {
 					log.Println(err)
@@ -188,13 +199,13 @@ func (pm *PortMonitor) ReadParameters(portRange *string, portList *string, start
 				return errors.New(fmt.Sprintf("Configured port range '%s' is not range!", *portRange))
 			} else {
 				if p, err := strconv.ParseInt(ps[0], 10, 0); err == nil {
-					pm.start = p
+					pm.rstart = p
 				} else {
 					return errors.New(fmt.Sprintf("Start port '%s' of '%s' is not an integer (%s).\n", ps[0], *portRange, err))
 				}
 
 				if p, err := strconv.ParseInt(ps[1], 10, 0); err == nil {
-					pm.end = p
+					pm.rend = p
 				} else {
 					return errors.New(fmt.Sprintf("End port '%s' of '%s' is not an integer (%s).\n", ps[1], *portRange, err))
 				}
@@ -233,8 +244,7 @@ func (pm *PortMonitor) ReadParameters(portRange *string, portList *string, start
 }
 
 func (pm *PortMonitor) ReadProperties(props map[string]string, portRange *string, portList *string, startPort *string, endPort *string) error {
-	switch {
-	case *portRange != "":
+	if *portRange != "" {
 		prValue, ok := props[*portRange]
 		if ok {
 			if strings.Contains(prValue, "-") {
@@ -260,24 +270,42 @@ func (pm *PortMonitor) ReadProperties(props map[string]string, portRange *string
 		} else {
 			return errors.New(fmt.Sprintf("There is no port range configured for '%s' in properties file.", *portRange))
 		}
-	case *portList != "":
-		prList, ok := props[*portList]
-		if ok {
-			pl := strings.Split(prList, ",")
-			for _, ps := range pl {
-				if pi, err := strconv.ParseInt(ps, 10, 0); err == nil {
-					pm.list = append(pm.list, pi)
+	}
+	if *portList != "" {
+		if strings.Contains(*portList, ",") {
+			plp := strings.Split(*portList, ",")
+			for _, p := range plp {
+				sp, ok := props[p]
+				if ok {
+					if spi, err := strconv.ParseInt(sp, 10, 0); err == nil {
+						pm.list = append(pm.list, spi)
+					} else {
+						log.Fatal(fmt.Sprintf("Port list member element '%s' is not a string in '%s' of '%s'!", sp, plp, *portList))
+					}
 				} else {
-					log.Fatal(fmt.Sprintf("Port list element '%s' is not a string in '%s' of '%s'!", ps, pl, *portList))
+					return errors.New(fmt.Sprintf("There is no port configured for '%s' in properties file.", p))
 				}
 			}
-			if len(pl) < 1 {
-				return errors.New(fmt.Sprintf("There is no port list configured for '%s' of '%s'.", *portList, prList))
-			}
 		} else {
-			return errors.New(fmt.Sprintf("There is no port list configured for '%s' in properties file.", *portList))
+			prList, ok := props[*portList]
+			if ok {
+				pl := strings.Split(prList, ",")
+				for _, ps := range pl {
+					if pi, err := strconv.ParseInt(ps, 10, 0); err == nil {
+						pm.list = append(pm.list, pi)
+					} else {
+						log.Fatal(fmt.Sprintf("Port list element '%s' is not a string in '%s' of '%s'!", ps, pl, *portList))
+					}
+				}
+				if len(pl) < 1 {
+					return errors.New(fmt.Sprintf("There is no port list configured for '%s' of '%s'.", *portList, prList))
+				}
+			} else {
+				return errors.New(fmt.Sprintf("There is no port list configured for '%s' in properties file.", *portList))
+			}
 		}
-	case *startPort != "" && *endPort != "":
+	}
+	if *startPort != "" && *endPort != "" {
 		p, ok := props[*startPort]
 		if ok {
 			if pi, err := strconv.ParseInt(p, 10, 0); err == nil {
@@ -361,11 +389,29 @@ func main() {
 
 	for _, ip := range m.Ips {
 		if m.start > 0 && m.end > 0 {
-			for p := m.start; p < m.end; p++ {
+			for p := m.start; p <= m.end; p++ {
 				if PortOpen(ip, p) {
 					log.Println(fmt.Sprintf("Port %d for %s is open.", p, ip))
 					message += fmt.Sprintf("Port %d for %s is open. \n", p, ip)
 					portIsOpen = true
+				} else {
+					if m.debug == true {
+						log.Println(fmt.Sprintf("Port %d for %s is not open.", p, ip))
+					}
+				}
+			}
+		}
+
+		if m.rstart > 0 && m.rend > 0 {
+			for p := m.rstart; p <= m.rend; p++ {
+				if PortOpen(ip, p) {
+					log.Println(fmt.Sprintf("Port %d for %s is open.", p, ip))
+					message += fmt.Sprintf("Port %d for %s is open. \n", p, ip)
+					portIsOpen = true
+				} else {
+					if m.debug == true {
+						log.Println(fmt.Sprintf("Port %d for %s is not open.", p, ip))
+					}
 				}
 			}
 		}
@@ -376,6 +422,10 @@ func main() {
 					log.Println(fmt.Sprintf("Port %d for %s is open.", port, ip))
 					message += fmt.Sprintf("Port %d for %s is open. \n", port, ip)
 					portIsOpen = true
+				} else {
+					if m.debug == true {
+						log.Println(fmt.Sprintf("Port %d for %s is not open.", port, ip))
+					}
 				}
 			}
 		}
