@@ -163,10 +163,10 @@ func TestParseCommandLineRange(t *testing.T) {
 	m := &PortMonitor{}
 	m.ParseCommandLine()
 
-	if m.start != 83 {
+	if m.rstart != 83 {
 		t.Errorf("Port is not correct. It is %d and should be %d", m.start, 83)
 	}
-	if m.end != 1023 {
+	if m.rend != 1023 {
 		t.Errorf("Port is not correct. It is %d and should be %d", m.end, 1023)
 	}
 }
