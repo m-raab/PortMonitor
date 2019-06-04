@@ -155,13 +155,13 @@ func (pm *PortMonitor) ParseCommandLine() {
 				err = propertiesSet.Parse(os.Args[2:])
 				if err == nil {
 					if *propsFilePtr == "" {
+						err = errors.New("The properties file must be specified for properties configuration.")
+					}
+					if err == nil {
 						if *propsWebhookUrlPtr != "" {
 							pm.url = *propsWebhookUrlPtr
 						}
 
-						err = errors.New("The properties file must be specified for properties configuration.")
-					}
-					if err == nil {
 						properties, err := ReadPropertiesFile(*propsFilePtr)
 						if err != nil {
 							err = errors.New("The properties file is not readable.")
