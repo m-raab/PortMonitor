@@ -46,7 +46,8 @@ type PortMonitor struct {
 
 	list []int64
 
-	debug bool
+	debug     bool
+	verifyurl bool
 }
 
 type ConfigProperties map[string]string
@@ -120,6 +121,7 @@ func (pm *PortMonitor) ParseCommandLine() {
 	paramListPtr := paramSet.String("list", "", "Port List")
 	paramWebhookUrlPtr := paramSet.String("webhook", "", "Webhook Url for Message")
 	paramDebugPtr := paramSet.Bool("debug", false, "Activates Debug Output")
+	paramVerifyPtr := paramSet.Bool("verify", false, "Send message to webhook")
 
 	propsFilePtr := propertiesSet.String("file", "", "Properties File (Required)")
 	propsStartPtr := propertiesSet.String("start", "", "Property Start Port")
@@ -128,6 +130,7 @@ func (pm *PortMonitor) ParseCommandLine() {
 	propsListPtr := propertiesSet.String("list", "", "Property Port List")
 	propsWebhookUrlPtr := propertiesSet.String("webhook", "", "Webhook Url for Message")
 	propsDebugPtr := propertiesSet.Bool("debug", false, "Activates Debug Output")
+	propsVerifyPtr := paramSet.Bool("verify", false, "Send message to webhook")
 
 	if len(os.Args) > 1 {
 		var err error = nil
@@ -151,6 +154,7 @@ func (pm *PortMonitor) ParseCommandLine() {
 					os.Exit(1)
 				}
 				pm.debug = *paramDebugPtr
+				pm.verifyurl = *paramVerifyPtr
 			case propertiesSet.Name():
 				err = propertiesSet.Parse(os.Args[2:])
 				if err == nil {
@@ -171,6 +175,7 @@ func (pm *PortMonitor) ParseCommandLine() {
 					}
 
 					pm.debug = *propsDebugPtr
+					pm.verifyurl = *propsVerifyPtr
 				}
 				if err != nil {
 					log.Println(err)
@@ -431,12 +436,17 @@ func main() {
 		}
 	}
 
-	if portIsOpen && m.url != "" {
+	if (portIsOpen || m.verifyurl) && m.url != "" {
 		log.Println("Send message to :", m.url)
 		m.sendMessage(message)
+	} else {
+		if m.debug == true {
+			log.Println("There is no Webhook URL defined.")
+		}
 	}
 
 	if portIsOpen {
+		log.Println("There are open ports! Check your processes on the machine.")
 		os.Exit(10)
 	} else {
 		os.Exit(0)
