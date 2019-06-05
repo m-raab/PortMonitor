@@ -130,7 +130,7 @@ func (pm *PortMonitor) ParseCommandLine() {
 	propsListPtr := propertiesSet.String("list", "", "Property Port List")
 	propsWebhookUrlPtr := propertiesSet.String("webhook", "", "Webhook Url for Message")
 	propsDebugPtr := propertiesSet.Bool("debug", false, "Activates Debug Output")
-	propsVerifyPtr := paramSet.Bool("verify", false, "Send message to webhook")
+	propsVerifyPtr := propertiesSet.Bool("verify", false, "Send message to webhook")
 
 	if len(os.Args) > 1 {
 		var err error = nil
