@@ -12,7 +12,7 @@ do
     GOARCH=${platform_split[1]}
     output_name=bin/${GOOS}-${GOARCH}/${package_name}
 
-    env GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${output_name} ${package}
+    env GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${output_name} *.go
     if [ $? -ne 0 ]; then
         echo 'An error has occurred during GO compilation! Aborting the script execution...'
         exit 1
