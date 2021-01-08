@@ -2,28 +2,6 @@
 
 
 [[projects]]
-  digest = "1:d55e9bbeb026d1e73776cb8775b04df331239947f734f131740eafb42f03c493"
-  name = "github.com/aws/aws-lambda-go"
-  packages = [
-    "events",
-    "lambda",
-    "lambda/handlertrace",
-    "lambda/messages",
-    "lambdacontext",
-  ]
-  pruneopts = "UT"
-  revision = "b3dd246b7d83fd62856549646711e5328075c69a"
-  version = "v1.22.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:ad75f28a7a224471c81188f8a19d357c0c3c7842fdfc5a456553527e0743e71f"
-  name = "github.com/ericdaugherty/msteams-webhook-go"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "98e78446d3aeb83d27887b835727c5301f6a471c"
-
-[[projects]]
   digest = "1:6360cb302ee308462f9e73479dba307fcf64f0307a5cb3651dcd2bafc8460e9e"
   name = "github.com/int128/slack"
   packages = ["."]
@@ -42,10 +20,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = [
-    "github.com/aws/aws-lambda-go/lambda",
-    "github.com/ericdaugherty/msteams-webhook-go",
-    "github.com/int128/slack",
-  ]
+  input-imports = ["github.com/int128/slack"]
   solver-name = "gps-cdcl"
   solver-version = 1
